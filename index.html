@@ -1,21 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boost Empire</title>
+
+<style>
+body{
+    margin:0;
+    font-family:sans-serif;
+    background:#020617;
+    color:white;
+    text-align:center;
+}
+
+.box{
+    padding:20px;
+}
+
+.card{
+    background:rgba(255,255,255,0.05);
+    padding:20px;
+    border-radius:15px;
+    margin-top:20px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+    <h1>🚀 Boost Empire</h1>
+
+    <!-- TELEGRAM LOGIN -->
+    <script async src="https://telegram.org/js/telegram-widget.js?22"
+    data-telegram-login="BoostEmpire_ProBot"
+    data-size="large"
+    data-userpic="false"
+    data-request-access="write"
+    data-onauth="onLogin(user)">
+    </script>
+
+    <div id="dashboard"></div>
+</div>
+
 <script>
-function login(user){
+function onLogin(user){
 
-    alert("LOGIN SUCCESS\nID: " + user.id);
+    console.log("LOGIN:", user);
 
-    fetch("https://web-qv4h.onrender.com/user/" + user.id)
-    .then(res => {
-        alert("API HIT SUCCESS");
-        return res.json();
-    })
+    let uid = user.id;
+
+    fetch("https://web-qv4h.onrender.com/user/" + uid)
+    .then(res => res.json())
     .then(data => {
 
-        alert("DATA: " + JSON.stringify(data));
+        console.log("DATA:", data);
 
         document.getElementById("dashboard").innerHTML = `
         <div class="card">
             <h2>Welcome ${user.first_name}</h2>
-            <p>ID: ${user.id}</p>
+            <p>🆔 ID: ${uid}</p>
             <p>💰 Balance: ₹${data.money || 0}</p>
             <p>🪙 Coins: ${data.credits || 0}</p>
         </div>
@@ -23,7 +67,11 @@ function login(user){
 
     })
     .catch(err => {
-        alert("ERROR: " + err);
+        console.log(err);
+        alert("API Error");
     });
 }
 </script>
+
+</body>
+</html>
