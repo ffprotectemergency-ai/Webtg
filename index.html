@@ -7,68 +7,131 @@
 <style>
 body{
     margin:0;
-    font-family:sans-serif;
-    background:#020617;
+    font-family: 'Segoe UI', sans-serif;
+    background:linear-gradient(135deg,#020617,#0f172a);
     color:white;
-    text-align:center;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+    padding:20px;
+}
+
+.glass{
+    background:rgba(255,255,255,0.05);
+    backdrop-filter:blur(15px);
+    border-radius:15px;
+    padding:20px;
+    margin-top:20px;
+}
+
+h1{text-align:center;}
+
+.row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
 }
 
 .box{
-    padding:20px;
+    flex:1;
+    padding:15px;
+    border-radius:10px;
+    background:rgba(255,255,255,0.08);
+    text-align:center;
 }
 
-.card{
-    background:rgba(255,255,255,0.05);
-    padding:20px;
-    border-radius:15px;
-    margin-top:20px;
+.history{
+    max-height:200px;
+    overflow:auto;
+    text-align:left;
+}
+
+.item{
+    border-bottom:1px solid rgba(255,255,255,0.1);
+    padding:5px 0;
 }
 </style>
 </head>
 
 <body>
 
-<div class="box">
-    <h1>🚀 Boost Empire</h1>
+<div class="container">
 
-    <!-- TELEGRAM LOGIN -->
-    <script async src="https://telegram.org/js/telegram-widget.js?22"
-    data-telegram-login="BoostEmpire_ProBot"
-    data-size="large"
-    data-userpic="false"
-    data-request-access="write"
-    data-onauth="onLogin(user)">
-    </script>
+<h1>🚀 Boost Empire</h1>
 
-    <div id="dashboard"></div>
+<!-- LOGIN -->
+<script async src="https://telegram.org/js/telegram-widget.js?22"
+data-telegram-login="BoostEmpire_ProBot"
+data-size="large"
+data-userpic="false"
+data-request-access="write"
+data-onauth="login(user)">
+</script>
+
+<div id="dashboard"></div>
+
 </div>
 
 <script>
-function onLogin(user){
+let UID = null;
 
-    console.log("LOGIN:", user);
+function login(user){
+    UID = user.id;
+    loadUser();
+    setInterval(loadUser, 3000); // 🔥 auto refresh
+}
 
-    let uid = user.id;
+function loadUser(){
 
-    fetch("https://web-1-lgk1.onrender.com/user/" + uid)
-    .then(res => res.json())
-    .then(data => {
-
-        console.log("DATA:", data);
+    fetch("https://web-1-lgk1.onrender.com/user/" + UID + "?t=" + Date.now())
+    .then(res=>res.json())
+    .then(data=>{
 
         document.getElementById("dashboard").innerHTML = `
-        <div class="card">
-            <h2>Welcome ${user.first_name}</h2>
-            <p>🆔 ID: ${uid}</p>
-            <p>💰 Balance: ₹${data.money || 0}</p>
-            <p>🪙 Coins: ${data.credits || 0}</p>
-        </div>
-        `;
 
-    })
-    .catch(err => {
-        console.log(err);
-        alert("API Error");
+        <!-- PROFILE -->
+        <div class="glass">
+            <h2>${data.name || "User"} 👋</h2>
+            <p>ID: ${UID}</p>
+            <p>Joined: ${new Date((data.join_time||0)*1000).toLocaleString()}</p>
+        </div>
+
+        <!-- WALLET -->
+        <div class="glass">
+            <h3>💰 Wallet</h3>
+            <div class="row">
+                <div class="box">₹ ${data.money || 0}</div>
+                <div class="box">🪙 ${data.credits || 0}</div>
+                <div class="box">💵 ${data.usdt || 0}</div>
+            </div>
+        </div>
+
+        <!-- STATS -->
+        <div class="glass">
+            <h3>📊 Stats</h3>
+            <div class="row">
+                <div class="box">Orders: ${data.orders || 0}</div>
+                <div class="box">Ref: ${data.ref_count || 0}</div>
+                <div class="box">VIP: ${data.vip > Date.now()/1000 ? "Active" : "No"}</div>
+            </div>
+        </div>
+
+        <!-- HISTORY -->
+        <div class="glass">
+            <h3>📜 Transactions</h3>
+            <div class="history">
+                ${(data.transactions || []).slice(-20).reverse().map(t=>`
+                    <div class="item">
+                        ${t.type || ""} | ${t.amount || ""} ${t.currency || ""} <br>
+                        <small>${t.note || ""}</small>
+                    </div>
+                `).join("")}
+            </div>
+        </div>
+
+        `;
     });
 }
 </script>
