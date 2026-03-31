@@ -1,53 +1,21 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Boost Empire</title>
-
-<style>
-body{
-    background:#020617;
-    color:white;
-    font-family:sans-serif;
-    text-align:center;
-    padding:20px;
-}
-.card{
-    background:rgba(255,255,255,0.05);
-    padding:20px;
-    border-radius:15px;
-    margin-top:20px;
-}
-</style>
-
-</head>
-<body>
-
-<h1>🚀 Boost Empire</h1>
-
-<script async src="https://telegram.org/js/telegram-widget.js?22"
-data-telegram-login="BoostEmpire_ProBot"
-data-size="large"
-data-onauth="login(user)">
-</script>
-
-<div id="dashboard"></div>
-
 <script>
 function login(user){
 
-    console.log("USER ID:", user.id);
+    alert("LOGIN SUCCESS\nID: " + user.id);
 
     fetch("https://web-qv4h.onrender.com/user/" + user.id)
-    .then(res => res.json())
+    .then(res => {
+        alert("API HIT SUCCESS");
+        return res.json();
+    })
     .then(data => {
 
-        console.log("API DATA:", data);
+        alert("DATA: " + JSON.stringify(data));
 
         document.getElementById("dashboard").innerHTML = `
         <div class="card">
             <h2>Welcome ${user.first_name}</h2>
-            <p>🆔 ID: ${user.id}</p>
+            <p>ID: ${user.id}</p>
             <p>💰 Balance: ₹${data.money || 0}</p>
             <p>🪙 Coins: ${data.credits || 0}</p>
         </div>
@@ -55,11 +23,7 @@ function login(user){
 
     })
     .catch(err => {
-        console.log("ERROR:", err);
-        alert("Data load failed");
+        alert("ERROR: " + err);
     });
 }
 </script>
-
-</body>
-</html>
