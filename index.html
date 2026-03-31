@@ -1,7 +1,7 @@
 <!DOCTYPE html><html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Boost Empire</title><style>
+<title>Boost Empire Ultimate</title><style>
 body{
 background:linear-gradient(135deg,#020617,#0a1a3a);
 color:white;
@@ -12,15 +12,15 @@ margin:0;
 .card{
 background:#0f172a;
 padding:15px;
-border-radius:12px;
 margin-top:12px;
+border-radius:12px;
 }
 input,select,button{
 width:100%;
 padding:10px;
 margin-top:8px;
-border-radius:8px;
 border:none;
+border-radius:8px;
 }
 button{background:#2563eb;color:white;}
 .row{display:flex;gap:10px;}
@@ -38,54 +38,61 @@ border-radius:8px;
 margin-top:8px;
 font-size:14px;
 }
-</style></head><body><div class="container"><h2>🚀 Boost Empire</h2><!-- LOGIN --><div class="card">
+</style></head><body><div class="container"><h2>🚀 Boost Empire Ultimate</h2><!-- LOGIN --><div class="card" id="loginBox">
 <input id="uid" placeholder="Enter Telegram ID">
 <button onclick="login()">Login</button>
 </div><div id="app"></div></div><script>
 
-// 🔥 CHANGE API HERE
+// 🔥 CHANGE THESE ONLY
 const API="https://untitled-shorts-pale-newspapers.trycloudflare.com";
 const BOT="https://t.me/BoostEmpire_ProBot";
 
-// PRICE SYSTEM
+// 🔥 PRICE (FIXED EXACT)
 const PRICE={
-tg_members:120,
-tg_react:80,
-tg_views:50,
-ig_follow:150,
-ig_like:60,
-ig_views:40
+tg_members:10,
+tg_react:1,
+tg_views:0.5,
+ig_follow:10,
+ig_like:2,
+ig_views:0.5
 };
 
 let USER={}, UID="";
 
-// LOGIN
+// 🔥 LOGIN
 function login(){
 UID=document.getElementById("uid").value;
 
-fetch(API+"/user/"+UID)
-.then(r=>r.json())
-.then(d=>{
-USER=d;
+if(!UID) return alert("Enter ID");
 
-if(!USER || Object.keys(USER).length===0){
+fetch(API+"/user/"+UID)
+.then(res=>{
+if(!res.ok) throw "API error";
+return res.json();
+})
+.then(data=>{
+
+// NEW USER
+if(!data || Object.keys(data).length===0){
 document.getElementById("app").innerHTML=`
 <div class="card">
 <h3>👋 New User</h3>
-<p>Start bot first</p>
-<button onclick="openBot()">Open Bot</button>
+<p>No account found</p>
+<button onclick="openBot()">Start Bot</button>
 </div>`;
 return;
 }
 
+USER=data;
+document.getElementById("loginBox").style.display="none";
 render();
 })
 .catch(()=>{
-document.getElementById("app").innerHTML="❌ API Error";
+document.getElementById("app").innerHTML="❌ API Not Connected";
 });
 }
 
-// RENDER UI
+// 🔥 RENDER ALL UI
 function render(){
 
 document.getElementById("app").innerHTML=`
@@ -115,7 +122,7 @@ Joined: ${formatTime(USER.join_time)}
 <div class="row">
 <div class="box">Orders: ${USER.orders||0}</div>
 <div class="box">Ref: ${USER.ref_count||0}</div>
-<div class="box">VIP: ${USER.vip> Date.now()/1000 ? "Active" : "No"}</div>
+<div class="box">VIP: ${USER.vip > Date.now()/1000 ? "Active" : "No"}</div>
 </div>
 </div>
 
@@ -138,27 +145,24 @@ Joined: ${formatTime(USER.join_time)}
 <button onclick="preview()">Check Price</button>
 
 <div id="preview"></div>
-
 </div>
 
-<!-- TRANSACTIONS -->
+<!-- TRANSACTION SEARCH -->
 <div class="card">
 <h3>📜 Transactions</h3>
-
 <input placeholder="Search..." oninput="searchTx(this.value)">
-
 <div id="tx"></div>
 </div>
 
-<!-- ORDERS -->
+<!-- ORDER HISTORY -->
 <div class="card">
 <h3>📦 Order History</h3>
 <div id="orders"></div>
 </div>
 
-<!-- LINKS -->
+<!-- QUICK LINKS -->
 <div class="card">
-<h3>🔗 Quick</h3>
+<h3>⚡ Quick Access</h3>
 <button onclick="openBot()">Open Bot</button>
 <button onclick="channel()">Channel</button>
 <button onclick="wa()">WhatsApp</button>
@@ -170,87 +174,100 @@ loadTx();
 loadOrders();
 }
 
-// PRICE PREVIEW
+// 🔥 PRICE PREVIEW
 function preview(){
 let s=document.getElementById("service").value;
 let q=parseInt(document.getElementById("qty").value);
 
-if(!q)return alert("Enter quantity");
+if(!q) return alert("Enter quantity");
+if(q < 10) return alert("Min order 10");
 
-let cost=Math.floor(q*PRICE[s]/1000);
+let coins=Math.ceil(q * PRICE[s]);
+let money=(coins/1000).toFixed(2);
 
 document.getElementById("preview").innerHTML=`
 <div class="tx">
 Service: ${s}<br>
 Qty: ${q}<br>
-Cost: ₹${cost} / ${cost} coins<br><br>
+Coins: ${coins}<br>
+₹: ${money}<br><br>
 
-<button onclick="order('${s}',${q})">OK</button>
+<button onclick="confirmOrder('${s}',${q})">Confirm</button>
 </div>`;
 }
 
-// REDIRECT ORDER
-function order(s,q){
+// 🔥 BOT REDIRECT
+function confirmOrder(s,q){
 let link=document.getElementById("link").value;
-
-if(!link)return alert("Enter link");
+if(!link) return alert("Enter link");
 
 let text=`order_${s}_${q}_${encodeURIComponent(link)}`;
 window.location=BOT+"?start="+text;
 }
 
-// TRANSACTIONS
+// 🔥 LOAD TRANSACTIONS
 function loadTx(){
 let html="";
+
 (USER.transactions||[]).slice(-30).reverse().forEach(t=>{
+
+let amount = t.coin ? `${t.amount} 🪙` : `₹ ${t.amount}`;
+
 html+=`
 <div class="tx">
-${t.type} ₹${t.amount}<br>
+Type: ${(t.type||"").toUpperCase()}<br>
+Amount: ${amount}<br>
 Reason: ${t.note||"N/A"}<br>
 Time: ${formatTime(t.time)}
 </div>`;
 });
+
 document.getElementById("tx").innerHTML=html;
 }
 
-// SEARCH TX
+// 🔥 SEARCH TX
 function searchTx(q){
 let html="";
+
 (USER.transactions||[]).filter(t=>
 JSON.stringify(t).toLowerCase().includes(q.toLowerCase())
 ).forEach(t=>{
 html+=`
 <div class="tx">
-${t.type} ₹${t.amount}<br>
+${t.type} ${t.amount}<br>
 ${t.note}
 </div>`;
 });
+
 document.getElementById("tx").innerHTML=html;
 }
 
-// ORDERS
+// 🔥 LOAD ORDERS
 function loadOrders(){
 let html="";
+
 (USER.order_history||[]).slice(-30).reverse().forEach(o=>{
 html+=`
 <div class="tx">
-${o.service}<br>
+Service: ${o.service}<br>
 Qty: ${o.quantity}<br>
 Status: ${o.status}<br>
 Link: ${o.link}<br>
 Time: ${formatTime(o.time)}
 </div>`;
 });
+
 document.getElementById("orders").innerHTML=html;
 }
 
-// TIME FORMAT
+// 🔥 TIME FIX
 function formatTime(t){
 if(!t) return "N/A";
+if(t > 1000000000000) t = Math.floor(t/1000);
 return new Date(t*1000).toLocaleString();
 }
 
-// LINKS
+// 🔥 LINKS
 function openBot(){window.location=BOT;}
 function channel(){window.location="https://t.me/boost_empire_official";}
 function wa(){window.location="https://wa.me/916207022628";}
