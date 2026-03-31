@@ -1,23 +1,53 @@
 <!DOCTYPE html><html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Boost Empire Ultimate</title><style>
-body{background:linear-gradient(135deg,#020617,#0a1a3a);color:white;font-family:sans-serif;margin:0;}
+<title>Boost Empire</title><style>
+body{
+background:linear-gradient(135deg,#020617,#0a1a3a);
+color:white;
+font-family:sans-serif;
+margin:0;
+}
 .container{padding:15px;}
-.card{background:#0f172a;padding:15px;margin-top:12px;border-radius:12px;}
-input,select,button{width:100%;padding:10px;margin-top:8px;border:none;border-radius:8px;}
+.card{
+background:#0f172a;
+padding:15px;
+border-radius:12px;
+margin-top:12px;
+}
+input,select,button{
+width:100%;
+padding:10px;
+margin-top:8px;
+border-radius:8px;
+border:none;
+}
 button{background:#2563eb;color:white;}
 .row{display:flex;gap:10px;}
-.box{flex:1;background:#1e293b;padding:10px;border-radius:8px;text-align:center;}
-</style></head>
-<body><div class="container"><h2>🚀 Boost Empire Ultimate</h2><!-- LOGIN --><div class="card">
+.box{
+flex:1;
+background:#1e293b;
+padding:10px;
+border-radius:8px;
+text-align:center;
+}
+.tx{
+background:#1e293b;
+padding:10px;
+border-radius:8px;
+margin-top:8px;
+font-size:14px;
+}
+</style></head><body><div class="container"><h2>🚀 Boost Empire</h2><!-- LOGIN --><div class="card">
 <input id="uid" placeholder="Enter Telegram ID">
-<button onclick="login()">Login / Search User</button>
+<button onclick="login()">Login</button>
 </div><div id="app"></div></div><script>
 
-const API="https://licenses-dip-translation-able.trycloudflare.com";
+// 🔥 CHANGE API HERE
+const API="https://untitled-shorts-pale-newspapers.trycloudflare.com";
 const BOT="https://t.me/BoostEmpire_ProBot";
 
+// PRICE SYSTEM
 const PRICE={
 tg_members:120,
 tg_react:80,
@@ -27,40 +57,47 @@ ig_like:60,
 ig_views:40
 };
 
-let USER={};
-let UID="";
+let USER={}, UID="";
 
+// LOGIN
 function login(){
 UID=document.getElementById("uid").value;
 
 fetch(API+"/user/"+UID)
 .then(r=>r.json())
 .then(d=>{
-USER=d || {};
-render();
-});
-}
+USER=d;
 
-function render(){
-
-// NEW USER CHECK
 if(!USER || Object.keys(USER).length===0){
 document.getElementById("app").innerHTML=`
 <div class="card">
 <h3>👋 New User</h3>
-<p>No data found. Start bot first.</p>
-<button onclick="openBot()">Start Bot</button>
+<p>Start bot first</p>
+<button onclick="openBot()">Open Bot</button>
 </div>`;
 return;
 }
+
+render();
+})
+.catch(()=>{
+document.getElementById("app").innerHTML="❌ API Error";
+});
+}
+
+// RENDER UI
+function render(){
 
 document.getElementById("app").innerHTML=`
 
 <!-- PROFILE -->
 <div class="card">
 <h3>👤 Profile</h3>
+Name: ${USER.name || USER.first_name || "N/A"}<br>
+Username: ${USER.username || "N/A"}<br>
+Phone: ${USER.phone || "N/A"}<br>
 ID: ${UID}<br>
-Joined: ${new Date((USER.join_time||0)*1000).toLocaleString()}
+Joined: ${formatTime(USER.join_time)}
 </div>
 
 <!-- WALLET -->
@@ -95,10 +132,10 @@ Joined: ${new Date((USER.join_time||0)*1000).toLocaleString()}
 <option value="ig_views">Instagram Views</option>
 </select>
 
-<input id="link" placeholder="Enter link">
+<input id="link" placeholder="Enter Link">
 <input id="qty" placeholder="Quantity">
 
-<button onclick="calc()">Check Price</button>
+<button onclick="preview()">Check Price</button>
 
 <div id="preview"></div>
 
@@ -121,7 +158,7 @@ Joined: ${new Date((USER.join_time||0)*1000).toLocaleString()}
 
 <!-- LINKS -->
 <div class="card">
-<h3>🔗 Quick Links</h3>
+<h3>🔗 Quick</h3>
 <button onclick="openBot()">Open Bot</button>
 <button onclick="channel()">Channel</button>
 <button onclick="wa()">WhatsApp</button>
@@ -133,53 +170,57 @@ loadTx();
 loadOrders();
 }
 
-function calc(){
+// PRICE PREVIEW
+function preview(){
 let s=document.getElementById("service").value;
 let q=parseInt(document.getElementById("qty").value);
 
 if(!q)return alert("Enter quantity");
 
-let price=PRICE[s];
-let cost=Math.floor(q*price/1000);
+let cost=Math.floor(q*PRICE[s]/1000);
 
 document.getElementById("preview").innerHTML=`
-<h4>Confirm Order</h4>
+<div class="tx">
 Service: ${s}<br>
 Qty: ${q}<br>
 Cost: ₹${cost} / ${cost} coins<br><br>
 
-<button onclick="confirmOrder('${s}',${q})">OK</button>
-`;
+<button onclick="order('${s}',${q})">OK</button>
+</div>`;
 }
 
-function confirmOrder(s,q){
+// REDIRECT ORDER
+function order(s,q){
 let link=document.getElementById("link").value;
+
 if(!link)return alert("Enter link");
 
 let text=`order_${s}_${q}_${encodeURIComponent(link)}`;
 window.location=BOT+"?start="+text;
 }
 
+// TRANSACTIONS
 function loadTx(){
 let html="";
 (USER.transactions||[]).slice(-30).reverse().forEach(t=>{
 html+=`
-<div class="card">
+<div class="tx">
 ${t.type} ₹${t.amount}<br>
 Reason: ${t.note||"N/A"}<br>
-Time: ${new Date((t.time||0)*1000).toLocaleString()}
+Time: ${formatTime(t.time)}
 </div>`;
 });
 document.getElementById("tx").innerHTML=html;
 }
 
+// SEARCH TX
 function searchTx(q){
 let html="";
 (USER.transactions||[]).filter(t=>
 JSON.stringify(t).toLowerCase().includes(q.toLowerCase())
 ).forEach(t=>{
 html+=`
-<div class="card">
+<div class="tx">
 ${t.type} ₹${t.amount}<br>
 ${t.note}
 </div>`;
@@ -187,32 +228,32 @@ ${t.note}
 document.getElementById("tx").innerHTML=html;
 }
 
+// ORDERS
 function loadOrders(){
 let html="";
 (USER.order_history||[]).slice(-30).reverse().forEach(o=>{
 html+=`
-<div class="card">
+<div class="tx">
 ${o.service}<br>
 Qty: ${o.quantity}<br>
 Status: ${o.status}<br>
 Link: ${o.link}<br>
-Time: ${new Date((o.time||0)*1000).toLocaleString()}
+Time: ${formatTime(o.time)}
 </div>`;
 });
 document.getElementById("orders").innerHTML=html;
 }
 
-function openBot(){
-window.location=BOT;
+// TIME FORMAT
+function formatTime(t){
+if(!t) return "N/A";
+return new Date(t*1000).toLocaleString();
 }
 
-function channel(){
-window.location="https://t.me/boost_empire_official";
-}
-
-function wa(){
-window.location="https://wa.me/916207022628";
-}
+// LINKS
+function openBot(){window.location=BOT;}
+function channel(){window.location="https://t.me/boost_empire_official";}
+function wa(){window.location="https://wa.me/916207022628";}
 
 </script></body>
 </html>
