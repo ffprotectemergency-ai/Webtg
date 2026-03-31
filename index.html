@@ -1,212 +1,218 @@
 <!DOCTYPE html><html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Boost Empire</title><style>
-body{
-    margin:0;
-    font-family: 'Segoe UI', sans-serif;
-    background:linear-gradient(135deg,#020617,#0f172a);
-    color:white;
+<title>Boost Empire Ultimate</title><style>
+body{background:linear-gradient(135deg,#020617,#0a1a3a);color:white;font-family:sans-serif;margin:0;}
+.container{padding:15px;}
+.card{background:#0f172a;padding:15px;margin-top:12px;border-radius:12px;}
+input,select,button{width:100%;padding:10px;margin-top:8px;border:none;border-radius:8px;}
+button{background:#2563eb;color:white;}
+.row{display:flex;gap:10px;}
+.box{flex:1;background:#1e293b;padding:10px;border-radius:8px;text-align:center;}
+</style></head>
+<body><div class="container"><h2>🚀 Boost Empire Ultimate</h2><!-- LOGIN --><div class="card">
+<input id="uid" placeholder="Enter Telegram ID">
+<button onclick="login()">Login / Search User</button>
+</div><div id="app"></div></div><script>
+
+const API="https://licenses-dip-translation-able.trycloudflare.com";
+const BOT="https://t.me/BoostEmpire_ProBot";
+
+const PRICE={
+tg_members:120,
+tg_react:80,
+tg_views:50,
+ig_follow:150,
+ig_like:60,
+ig_views:40
+};
+
+let USER={};
+let UID="";
+
+function login(){
+UID=document.getElementById("uid").value;
+
+fetch(API+"/user/"+UID)
+.then(r=>r.json())
+.then(d=>{
+USER=d || {};
+render();
+});
 }
 
-.container{
-    max-width:900px;
-    margin:auto;
-    padding:20px;
+function render(){
+
+// NEW USER CHECK
+if(!USER || Object.keys(USER).length===0){
+document.getElementById("app").innerHTML=`
+<div class="card">
+<h3>👋 New User</h3>
+<p>No data found. Start bot first.</p>
+<button onclick="openBot()">Start Bot</button>
+</div>`;
+return;
 }
 
-.glass{
-    background:rgba(255,255,255,0.05);
-    backdrop-filter:blur(15px);
-    border-radius:15px;
-    padding:20px;
-    margin-top:20px;
+document.getElementById("app").innerHTML=`
+
+<!-- PROFILE -->
+<div class="card">
+<h3>👤 Profile</h3>
+ID: ${UID}<br>
+Joined: ${new Date((USER.join_time||0)*1000).toLocaleString()}
+</div>
+
+<!-- WALLET -->
+<div class="card">
+<h3>💰 Wallet</h3>
+<div class="row">
+<div class="box">₹ ${USER.money||0}</div>
+<div class="box">🪙 ${USER.credits||0}</div>
+</div>
+</div>
+
+<!-- STATS -->
+<div class="card">
+<h3>📊 Stats</h3>
+<div class="row">
+<div class="box">Orders: ${USER.orders||0}</div>
+<div class="box">Ref: ${USER.ref_count||0}</div>
+<div class="box">VIP: ${USER.vip> Date.now()/1000 ? "Active" : "No"}</div>
+</div>
+</div>
+
+<!-- ORDER -->
+<div class="card">
+<h3>📦 Order</h3>
+
+<select id="service">
+<option value="tg_members">Telegram Members</option>
+<option value="tg_react">Telegram Reactions</option>
+<option value="tg_views">Telegram Views</option>
+<option value="ig_follow">Instagram Followers</option>
+<option value="ig_like">Instagram Likes</option>
+<option value="ig_views">Instagram Views</option>
+</select>
+
+<input id="link" placeholder="Enter link">
+<input id="qty" placeholder="Quantity">
+
+<button onclick="calc()">Check Price</button>
+
+<div id="preview"></div>
+
+</div>
+
+<!-- TRANSACTIONS -->
+<div class="card">
+<h3>📜 Transactions</h3>
+
+<input placeholder="Search..." oninput="searchTx(this.value)">
+
+<div id="tx"></div>
+</div>
+
+<!-- ORDERS -->
+<div class="card">
+<h3>📦 Order History</h3>
+<div id="orders"></div>
+</div>
+
+<!-- LINKS -->
+<div class="card">
+<h3>🔗 Quick Links</h3>
+<button onclick="openBot()">Open Bot</button>
+<button onclick="channel()">Channel</button>
+<button onclick="wa()">WhatsApp</button>
+</div>
+
+`;
+
+loadTx();
+loadOrders();
 }
 
-h1{text-align:center;}
+function calc(){
+let s=document.getElementById("service").value;
+let q=parseInt(document.getElementById("qty").value);
 
-.row{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
+if(!q)return alert("Enter quantity");
+
+let price=PRICE[s];
+let cost=Math.floor(q*price/1000);
+
+document.getElementById("preview").innerHTML=`
+<h4>Confirm Order</h4>
+Service: ${s}<br>
+Qty: ${q}<br>
+Cost: ₹${cost} / ${cost} coins<br><br>
+
+<button onclick="confirmOrder('${s}',${q})">OK</button>
+`;
 }
 
-.box{
-    flex:1;
-    padding:15px;
-    border-radius:10px;
-    background:rgba(255,255,255,0.08);
-    text-align:center;
+function confirmOrder(s,q){
+let link=document.getElementById("link").value;
+if(!link)return alert("Enter link");
+
+let text=`order_${s}_${q}_${encodeURIComponent(link)}`;
+window.location=BOT+"?start="+text;
 }
 
-.history{
-    max-height:250px;
-    overflow:auto;
+function loadTx(){
+let html="";
+(USER.transactions||[]).slice(-30).reverse().forEach(t=>{
+html+=`
+<div class="card">
+${t.type} ₹${t.amount}<br>
+Reason: ${t.note||"N/A"}<br>
+Time: ${new Date((t.time||0)*1000).toLocaleString()}
+</div>`;
+});
+document.getElementById("tx").innerHTML=html;
 }
 
-.item{
-    border-bottom:1px solid rgba(255,255,255,0.1);
-    padding:8px 0;
+function searchTx(q){
+let html="";
+(USER.transactions||[]).filter(t=>
+JSON.stringify(t).toLowerCase().includes(q.toLowerCase())
+).forEach(t=>{
+html+=`
+<div class="card">
+${t.type} ₹${t.amount}<br>
+${t.note}
+</div>`;
+});
+document.getElementById("tx").innerHTML=html;
 }
 
-button{
-    background:#2563eb;
-    border:none;
-    color:white;
-    padding:12px;
-    border-radius:10px;
-    width:100%;
+function loadOrders(){
+let html="";
+(USER.order_history||[]).slice(-30).reverse().forEach(o=>{
+html+=`
+<div class="card">
+${o.service}<br>
+Qty: ${o.quantity}<br>
+Status: ${o.status}<br>
+Link: ${o.link}<br>
+Time: ${new Date((o.time||0)*1000).toLocaleString()}
+</div>`;
+});
+document.getElementById("orders").innerHTML=html;
 }
 
-input, select{
-    width:100%;
-    padding:10px;
-    margin-top:10px;
-    border-radius:8px;
-    border:none;
-}
-</style></head><body><div class="container"><h1>🚀 Boost Empire</h1><!-- TELEGRAM LOGIN --><script async src="https://telegram.org/js/telegram-widget.js?22"
-data-telegram-login="BoostEmpire_ProBot"
-data-size="large"
-data-request-access="write"
-data-onauth="login(user)">
-</script><div id="app"></div></div><script>
-let UID = null;
-
-function login(user){
-    UID = user.id;
-    loadUser();
-    setInterval(loadUser, 3000);
+function openBot(){
+window.location=BOT;
 }
 
-function loadUser(){
-
-    fetch("https://web-1-lgk1.onrender.com/user/" + UID + "?t=" + Date.now())
-    .then(res=>res.json())
-    .then(data=>{
-
-        // 🔥 NEW USER
-        if (!data || Object.keys(data).length === 0){
-            document.getElementById("app").innerHTML = `
-            <div class="glass">
-                <h2>👋 Welcome to Boost Empire</h2>
-                <p>Boost Telegram & Instagram instantly 🚀</p>
-
-                <ul>
-                    <li>⚡ Fast Delivery</li>
-                    <li>💰 Cheap Price</li>
-                    <li>🔒 Safe System</li>
-                </ul>
-
-                <a href="https://t.me/BoostEmpire_ProBot">
-                    <button>🚀 Start Bot</button>
-                </a>
-            </div>`;
-            return;
-        }
-
-        document.getElementById("app").innerHTML = `
-
-        <!-- PROFILE -->
-        <div class="glass">
-            <h2>👤 ${data.name || "User"}</h2>
-            <p>ID: ${UID}</p>
-        </div>
-
-        <!-- WALLET -->
-        <div class="glass">
-            <h3>💰 Wallet</h3>
-            <div class="row">
-                <div class="box">₹ ${data.money ?? 0}</div>
-                <div class="box">🪙 ${data.credits ?? 0}</div>
-                <div class="box">💵 ${data.usdt ?? 0}</div>
-            </div>
-        </div>
-
-        <!-- STATS -->
-        <div class="glass">
-            <h3>📊 Stats</h3>
-            <div class="row">
-                <div class="box">Orders: ${data.orders ?? 0}</div>
-                <div class="box">Ref: ${data.ref_count ?? 0}</div>
-                <div class="box">VIP: ${data.vip > Date.now()/1000 ? "Active" : "No"}</div>
-            </div>
-        </div>
-
-        <!-- ORDER PANEL -->
-        <div class="glass">
-            <h3>🚀 Place Order</h3>
-
-            <select id="service">
-                <option value="tg_members">Telegram Members</option>
-                <option value="tg_views">Telegram Views</option>
-                <option value="ig_follow">Instagram Followers</option>
-            </select>
-
-            <input id="link" placeholder="Enter link">
-            <input id="qty" placeholder="Quantity">
-
-            <button onclick="placeOrder()">Place Order</button>
-        </div>
-
-        <!-- TRANSACTIONS -->
-        <div class="glass">
-            <h3>📜 Transactions</h3>
-            <div class="history">
-                ${(data.transactions || []).slice(-15).reverse().map(t=>`
-                    <div class="item">
-                        <b>${t.type}</b> | ${t.amount} ${t.currency}<br>
-                        <small>${t.note || ""}</small>
-                    </div>
-                `).join("")}
-            </div>
-        </div>
-
-        <!-- ORDERS -->
-        <div class="glass">
-            <h3>📦 Orders</h3>
-            <div class="history">
-                ${(data.order_history || []).slice(-15).reverse().map(o=>`
-                    <div class="item">
-                        <b>${o.service || "Service"}</b><br>
-                        Link: ${o.link || "-"}<br>
-                        Qty: ${o.quantity || 0}<br>
-                        Status: ${o.status || "Done"}
-                    </div>
-                `).join("")}
-            </div>
-        </div>
-
-        `;
-    });
+function channel(){
+window.location="https://t.me/boost_empire_official";
 }
 
-// 🔥 ORDER FUNCTION
-function placeOrder(){
-
-    let service = document.getElementById("service").value;
-    let link = document.getElementById("link").value;
-    let qty = document.getElementById("qty").value;
-
-    if(!link || !qty){
-        alert("Fill all fields");
-        return;
-    }
-
-    fetch("https://web-1-lgk1.onrender.com/order", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-            uid: UID,
-            service: service,
-            link: link,
-            quantity: qty
-        })
-    })
-    .then(res=>res.json())
-    .then(r=>{
-        alert(r.status || "Order Sent");
-    });
+function wa(){
+window.location="https://wa.me/916207022628";
 }
+
 </script></body>
 </html>
