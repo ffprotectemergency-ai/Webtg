@@ -1,10 +1,7 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Boost Empire</title>
-
-<style>
+<title>Boost Empire</title><style>
 body{
     margin:0;
     font-family: 'Segoe UI', sans-serif;
@@ -43,44 +40,43 @@ h1{text-align:center;}
 }
 
 .history{
-    max-height:200px;
+    max-height:250px;
     overflow:auto;
-    text-align:left;
 }
 
 .item{
     border-bottom:1px solid rgba(255,255,255,0.1);
-    padding:5px 0;
+    padding:8px 0;
 }
-</style>
-</head>
 
-<body>
+button{
+    background:#2563eb;
+    border:none;
+    color:white;
+    padding:12px;
+    border-radius:10px;
+    width:100%;
+}
 
-<div class="container">
-
-<h1>🚀 Boost Empire</h1>
-
-<!-- LOGIN -->
-<script async src="https://telegram.org/js/telegram-widget.js?22"
+input, select{
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+    border-radius:8px;
+    border:none;
+}
+</style></head><body><div class="container"><h1>🚀 Boost Empire</h1><!-- TELEGRAM LOGIN --><script async src="https://telegram.org/js/telegram-widget.js?22"
 data-telegram-login="BoostEmpire_ProBot"
 data-size="large"
-data-userpic="false"
 data-request-access="write"
 data-onauth="login(user)">
-</script>
-
-<div id="dashboard"></div>
-
-</div>
-
-<script>
+</script><div id="app"></div></div><script>
 let UID = null;
 
 function login(user){
     UID = user.id;
     loadUser();
-    setInterval(loadUser, 3000); // 🔥 auto refresh
+    setInterval(loadUser, 3000);
 }
 
 function loadUser(){
@@ -89,22 +85,41 @@ function loadUser(){
     .then(res=>res.json())
     .then(data=>{
 
-        document.getElementById("dashboard").innerHTML = `
+        // 🔥 NEW USER
+        if (!data || Object.keys(data).length === 0){
+            document.getElementById("app").innerHTML = `
+            <div class="glass">
+                <h2>👋 Welcome to Boost Empire</h2>
+                <p>Boost Telegram & Instagram instantly 🚀</p>
+
+                <ul>
+                    <li>⚡ Fast Delivery</li>
+                    <li>💰 Cheap Price</li>
+                    <li>🔒 Safe System</li>
+                </ul>
+
+                <a href="https://t.me/BoostEmpire_ProBot">
+                    <button>🚀 Start Bot</button>
+                </a>
+            </div>`;
+            return;
+        }
+
+        document.getElementById("app").innerHTML = `
 
         <!-- PROFILE -->
         <div class="glass">
-            <h2>${data.name || "User"} 👋</h2>
+            <h2>👤 ${data.name || "User"}</h2>
             <p>ID: ${UID}</p>
-            <p>Joined: ${new Date((data.join_time||0)*1000).toLocaleString()}</p>
         </div>
 
         <!-- WALLET -->
         <div class="glass">
             <h3>💰 Wallet</h3>
             <div class="row">
-                <div class="box">₹ ${data.money || 0}</div>
-                <div class="box">🪙 ${data.credits || 0}</div>
-                <div class="box">💵 ${data.usdt || 0}</div>
+                <div class="box">₹ ${data.money ?? 0}</div>
+                <div class="box">🪙 ${data.credits ?? 0}</div>
+                <div class="box">💵 ${data.usdt ?? 0}</div>
             </div>
         </div>
 
@@ -112,20 +127,51 @@ function loadUser(){
         <div class="glass">
             <h3>📊 Stats</h3>
             <div class="row">
-                <div class="box">Orders: ${data.orders || 0}</div>
-                <div class="box">Ref: ${data.ref_count || 0}</div>
+                <div class="box">Orders: ${data.orders ?? 0}</div>
+                <div class="box">Ref: ${data.ref_count ?? 0}</div>
                 <div class="box">VIP: ${data.vip > Date.now()/1000 ? "Active" : "No"}</div>
             </div>
         </div>
 
-        <!-- HISTORY -->
+        <!-- ORDER PANEL -->
+        <div class="glass">
+            <h3>🚀 Place Order</h3>
+
+            <select id="service">
+                <option value="tg_members">Telegram Members</option>
+                <option value="tg_views">Telegram Views</option>
+                <option value="ig_follow">Instagram Followers</option>
+            </select>
+
+            <input id="link" placeholder="Enter link">
+            <input id="qty" placeholder="Quantity">
+
+            <button onclick="placeOrder()">Place Order</button>
+        </div>
+
+        <!-- TRANSACTIONS -->
         <div class="glass">
             <h3>📜 Transactions</h3>
             <div class="history">
-                ${(data.transactions || []).slice(-20).reverse().map(t=>`
+                ${(data.transactions || []).slice(-15).reverse().map(t=>`
                     <div class="item">
-                        ${t.type || ""} | ${t.amount || ""} ${t.currency || ""} <br>
+                        <b>${t.type}</b> | ${t.amount} ${t.currency}<br>
                         <small>${t.note || ""}</small>
+                    </div>
+                `).join("")}
+            </div>
+        </div>
+
+        <!-- ORDERS -->
+        <div class="glass">
+            <h3>📦 Orders</h3>
+            <div class="history">
+                ${(data.order_history || []).slice(-15).reverse().map(o=>`
+                    <div class="item">
+                        <b>${o.service || "Service"}</b><br>
+                        Link: ${o.link || "-"}<br>
+                        Qty: ${o.quantity || 0}<br>
+                        Status: ${o.status || "Done"}
                     </div>
                 `).join("")}
             </div>
@@ -134,7 +180,33 @@ function loadUser(){
         `;
     });
 }
-</script>
 
-</body>
+// 🔥 ORDER FUNCTION
+function placeOrder(){
+
+    let service = document.getElementById("service").value;
+    let link = document.getElementById("link").value;
+    let qty = document.getElementById("qty").value;
+
+    if(!link || !qty){
+        alert("Fill all fields");
+        return;
+    }
+
+    fetch("https://web-1-lgk1.onrender.com/order", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+            uid: UID,
+            service: service,
+            link: link,
+            quantity: qty
+        })
+    })
+    .then(res=>res.json())
+    .then(r=>{
+        alert(r.status || "Order Sent");
+    });
+}
+</script></body>
 </html>
